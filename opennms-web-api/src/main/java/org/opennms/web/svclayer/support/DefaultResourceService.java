@@ -28,7 +28,6 @@
 
 package org.opennms.web.svclayer.support;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -111,7 +110,7 @@ public class DefaultResourceService implements ResourceService, InitializingBean
     public void setEventProxy(EventProxy eventProxy) {
         m_eventProxy = eventProxy;
     }
-    
+
     /**
      * <p>afterPropertiesSet</p>
      *
@@ -122,16 +121,6 @@ public class DefaultResourceService implements ResourceService, InitializingBean
         Assert.state(m_resourceDao != null, "resourceDao property is not set");
         Assert.state(m_graphDao != null, "graphDao property is not set");
         Assert.state(m_eventProxy != null, "eventProxy property is not set");
-    }
-    
-    /**
-     * <p>getRrdDirectory</p>
-     *
-     * @return a {@link java.io.File} object.
-     */
-    @Override
-    public File getRrdDirectory() {
-        return m_resourceDao.getRrdDirectory();
     }
 
     /**
@@ -256,14 +245,13 @@ public class DefaultResourceService implements ResourceService, InitializingBean
     public PrefabGraph[] findPrefabGraphsForResource(OnmsResource resource) {
         return m_graphDao.getPrefabGraphsForResource(resource);
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void promoteGraphAttributesForResource(OnmsResource resource) {
-        String baseDir = getRrdDirectory().getAbsolutePath();
         List<String> rrdFiles = new LinkedList<String>();
         for(RrdGraphAttribute attribute : resource.getRrdGraphAttributes().values()) {
-            rrdFiles.add(baseDir + File.separator + attribute.getRrdRelativePath());
+            rrdFiles.add(attribute.getRrdRelativePath());
         }
         EventBuilder bldr = new EventBuilder(EventConstants.PROMOTE_QUEUE_DATA_UEI, "OpenNMS.Webapp");
         bldr.addParam(EventConstants.PARM_FILES_TO_PROMOTE, rrdFiles);
@@ -274,7 +262,7 @@ public class DefaultResourceService implements ResourceService, InitializingBean
             LOG.warn("Unable to send file promotion event to opennms: {}", e, e);
         }
     }
-    
+
     /**
      * <p>promoteGraphAttributesForResource</p>
      *
@@ -284,8 +272,6 @@ public class DefaultResourceService implements ResourceService, InitializingBean
     public void promoteGraphAttributesForResource(String resourceId) {
         promoteGraphAttributesForResource(getResourceById(resourceId));
     }
-    
-    
 
     /**
      * <p>findPrefabGraphsForChildResources</p>

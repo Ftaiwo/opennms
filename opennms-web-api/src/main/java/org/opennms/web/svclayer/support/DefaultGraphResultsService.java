@@ -46,6 +46,7 @@ import org.opennms.netmgt.events.api.EventProxy;
 import org.opennms.netmgt.events.api.EventProxyException;
 import org.opennms.netmgt.model.OnmsResource;
 import org.opennms.netmgt.model.PrefabGraph;
+import org.opennms.netmgt.model.ResourceTypeUtils;
 import org.opennms.netmgt.model.RrdGraphAttribute;
 import org.opennms.netmgt.model.events.EventBuilder;
 import org.opennms.web.svclayer.api.GraphResultsService;
@@ -67,7 +68,6 @@ import org.springframework.util.Assert;
 public class DefaultGraphResultsService implements GraphResultsService, InitializingBean {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(DefaultGraphResultsService.class);
-
 
     private ResourceDao m_resourceDao;
 
@@ -254,9 +254,9 @@ public class DefaultGraphResultsService implements GraphResultsService, Initiali
         for(RrdGraphAttribute rrdAttr : attrs) {
             LOG.debug("getAttributeFiles: ResourceType, ParentResourceType = {}, {}", rrdAttr.getResource().getResourceType().getLabel(), rrdAttr.getResource().getParent().getResourceType().getLabel());
             if (rrdAttr.getResource().getParent().getResourceType().getLabel().equals("nodeSource")) {
-                filesToPromote.add(m_resourceDao.getRrdDirectory()+File.separator+"foreignSource"+File.separator+rrdAttr.getRrdRelativePath());
+                filesToPromote.add(ResourceTypeUtils.FOREIGN_SOURCE_DIRECTORY+File.separator+rrdAttr.getRrdRelativePath());
             } else {
-                filesToPromote.add(m_resourceDao.getRrdDirectory()+File.separator+rrdAttr.getRrdRelativePath());
+                filesToPromote.add(rrdAttr.getRrdRelativePath());
             }
         }
 

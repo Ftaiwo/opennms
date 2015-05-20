@@ -1,8 +1,8 @@
 /*******************************************************************************
  * This file is part of OpenNMS(R).
  *
- * Copyright (C) 2007-2014 The OpenNMS Group, Inc.
- * OpenNMS(R) is Copyright (C) 1999-2014 The OpenNMS Group, Inc.
+ * Copyright (C) 2007-2015 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2015 The OpenNMS Group, Inc.
  *
  * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
  *
@@ -28,7 +28,6 @@
 
 package org.opennms.netmgt.dao.api;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
@@ -42,21 +41,6 @@ import org.opennms.netmgt.model.OnmsResourceType;
  * <p>ResourceDao interface.</p>
  */
 public interface ResourceDao {
-    
-    /**
-     * <p>getRrdDirectory</p>
-     *
-     * @return a {@link java.io.File} object.
-     */
-    public File getRrdDirectory();
-    
-    /**
-     * <p>getRrdDirectory</p>
-     *
-     * @param verify a boolean.
-     * @return a {@link java.io.File} object.
-     */
-    public File getRrdDirectory(boolean verify);
 
     /**
      * <p>getResourceTypes</p>

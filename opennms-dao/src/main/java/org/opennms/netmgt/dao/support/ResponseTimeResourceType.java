@@ -28,7 +28,6 @@
 
 package org.opennms.netmgt.dao.support;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,12 +37,13 @@ import org.opennms.core.utils.InetAddressUtils;
 import org.opennms.core.utils.LazySet;
 import org.opennms.netmgt.dao.api.IpInterfaceDao;
 import org.opennms.netmgt.dao.api.NodeDao;
-import org.opennms.netmgt.dao.api.ResourceDao;
+import org.opennms.netmgt.dao.api.ResourceStorageDao;
 import org.opennms.netmgt.model.OnmsAttribute;
 import org.opennms.netmgt.model.OnmsIpInterface;
 import org.opennms.netmgt.model.OnmsNode;
 import org.opennms.netmgt.model.OnmsResource;
 import org.opennms.netmgt.model.OnmsResourceType;
+import org.opennms.netmgt.model.ResourcePath;
 import org.opennms.netmgt.model.ResourceTypeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,23 +55,23 @@ import org.springframework.orm.ObjectRetrievalFailureException;
 public class ResponseTimeResourceType implements OnmsResourceType {
     
     private static final Logger LOG = LoggerFactory.getLogger(ResponseTimeResourceType.class);
-    
-    private final ResourceDao m_resourceDao;
+
+    private final ResourceStorageDao m_resourceStorageDao;
     private final NodeDao m_nodeDao;
     private final IpInterfaceDao m_ipInterfaceDao;
 
     /**
      * <p>Constructor for ResponseTimeResourceType.</p>
      *
-     * @param resourceDao a {@link org.opennms.netmgt.dao.api.ResourceDao} object.
+     * @param resourceStorageDao a {@link org.opennms.netmgt.dao.api.ResourceStorageDao} object.
      * @param nodeDao a {@link org.opennms.netmgt.dao.api.NodeDao} object.
      */
-    public ResponseTimeResourceType(final ResourceDao resourceDao, final NodeDao nodeDao, final IpInterfaceDao ipInterfaceDao) {
-        m_resourceDao = resourceDao;
+    public ResponseTimeResourceType(final ResourceStorageDao resourceStorageDao, final NodeDao nodeDao, final IpInterfaceDao ipInterfaceDao) {
+        m_resourceStorageDao = resourceStorageDao;
         m_nodeDao = nodeDao;
         m_ipInterfaceDao = ipInterfaceDao;
     }
-    
+
     /**
      * <p>getLabel</p>
      *
@@ -111,9 +111,7 @@ public class ResponseTimeResourceType implements OnmsResourceType {
         for (final OnmsIpInterface i : node.getIpInterfaces()) {
             String ipAddr = InetAddressUtils.str(i.getIpAddress());
 
-            final File iface = getInterfaceDirectory(ipAddr, false);
-            
-            if (iface.isDirectory()) {
+            if (m_resourceStorageDao.exists(getInterfacePath(ipAddr))) {
                 resources.add(createResource(i));
             }
         }
@@ -139,21 +137,13 @@ public class ResponseTimeResourceType implements OnmsResourceType {
         return resource;
     }
 
-    private File getInterfaceDirectory(final String ipAddr, final boolean verify) {
-    	final File response = new File(m_resourceDao.getRrdDirectory(verify), ResourceTypeUtils.RESPONSE_DIRECTORY);
-        
-    	final File intfDir = new File(response, ipAddr);
-        if (verify && !intfDir.isDirectory()) {
-            throw new ObjectRetrievalFailureException(File.class, "No interface directory exists for " + ipAddr + ": " + intfDir);
-        }
+    private ResourcePath getInterfacePath(final String ipAddr) {
+        return new ResourcePath(
+                ResourceTypeUtils.RESPONSE_DIRECTORY,
+                ipAddr
+        );
+    }
 
-        return intfDir;
-    }
-    
-    private String getRelativeInterfacePath(final String ipAddr) {
-        return ResourceTypeUtils.RESPONSE_DIRECTORY + File.separator + ipAddr;
-    }
-    
     private OnmsResource createResource(final OnmsIpInterface ipInterface) {
     	final String intf = InetAddressUtils.str(ipInterface.getIpAddress());
     	final String label = intf;
@@ -188,7 +178,7 @@ public class ResponseTimeResourceType implements OnmsResourceType {
         @Override
         public Set<OnmsAttribute> load() {
             LOG.debug("lazy-loading attributes for response time resource '{}'", m_intf);
-            return ResourceTypeUtils.getAttributesAtRelativePath(m_resourceDao.getRrdDirectory(), getRelativeInterfacePath(m_intf));
+            return m_resourceStorageDao.getAttributes(getInterfacePath(m_intf));
         }
     }
 

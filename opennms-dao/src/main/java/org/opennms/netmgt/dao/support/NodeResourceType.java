@@ -185,7 +185,7 @@ public class NodeResourceType implements OnmsResourceType {
 
             return children;
         }
-        
+
         private Collection<OnmsResourceType> getResourceTypesForNode(int nodeId) {
             Collection<OnmsResourceType> resourceTypes = new LinkedList<OnmsResourceType>();
             for (OnmsResourceType resourceType : m_resourceDao.getResourceTypes()) {

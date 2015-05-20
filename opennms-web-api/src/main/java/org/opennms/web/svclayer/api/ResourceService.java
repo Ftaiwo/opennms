@@ -28,7 +28,6 @@
 
 package org.opennms.web.svclayer.api;
 
-import java.io.File;
 import java.util.List;
 
 import org.opennms.netmgt.model.OnmsNode;
@@ -46,12 +45,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Transactional(readOnly = true)
 public interface ResourceService {
-    /**
-     * <p>getRrdDirectory</p>
-     *
-     * @return a {@link java.io.File} object.
-     */
-    public File getRrdDirectory();
     /**
      * <p>findTopLevelResources</p>
      *

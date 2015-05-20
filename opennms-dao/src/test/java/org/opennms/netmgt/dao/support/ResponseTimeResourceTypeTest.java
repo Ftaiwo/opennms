@@ -1,8 +1,8 @@
 /*******************************************************************************
  * This file is part of OpenNMS(R).
  *
- * Copyright (C) 2007-2014 The OpenNMS Group, Inc.
- * OpenNMS(R) is Copyright (C) 1999-2014 The OpenNMS Group, Inc.
+ * Copyright (C) 2007-2015 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2015 The OpenNMS Group, Inc.
  *
  * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
  *
@@ -34,6 +34,7 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.HashSet;
@@ -50,13 +51,14 @@ import org.opennms.netmgt.model.OnmsIpInterface;
 import org.opennms.netmgt.model.OnmsNode;
 import org.opennms.netmgt.model.OnmsResource;
 import org.opennms.netmgt.model.ResourceTypeUtils;
+import org.opennms.netmgt.rrd.RrdUtils;
 
 public class ResponseTimeResourceTypeTest {
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
 
-    private DefaultResourceDao resourceDao = new DefaultResourceDao();
+    private FilesystemResourceStorageDao resourceStorageDao = new FilesystemResourceStorageDao();
 
     private NodeDao nodeDao = createMock(NodeDao.class);
 
@@ -68,12 +70,14 @@ public class ResponseTimeResourceTypeTest {
 
     private Set<OnmsIpInterface> ipInterfaces = new HashSet<OnmsIpInterface>();
 
-    private ResponseTimeResourceType responseTimeResourceType = new ResponseTimeResourceType(resourceDao, nodeDao, ipInterfaceDao);
+    private ResponseTimeResourceType responseTimeResourceType = new ResponseTimeResourceType(resourceStorageDao, nodeDao, ipInterfaceDao);
 
     @Before
-    public void setUp() {
-        resourceDao.setRrdDirectory(tempFolder.getRoot());
-        tempFolder.newFolder(ResourceTypeUtils.RESPONSE_DIRECTORY, "127.0.0.1");
+    public void setUp() throws IOException {
+        resourceStorageDao.setRrdDirectory(tempFolder.getRoot());
+        File ifResponseFolder = tempFolder.newFolder(ResourceTypeUtils.RESPONSE_DIRECTORY, "127.0.0.1");
+        File http = new File(ifResponseFolder, "http" + RrdUtils.getExtension());
+        http.createNewFile();
 
         ipInterfaces.add(ipInterface);
     }

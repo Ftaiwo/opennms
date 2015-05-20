@@ -31,6 +31,7 @@ package org.opennms.netmgt.dao.support;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
@@ -50,19 +51,21 @@ public class NodeSnmpResourceTypeTest {
     public void canGetChildByName() throws IOException {
         final OnmsNode node = createMock(OnmsNode.class);
         final OnmsResource parent = createMock(OnmsResource.class);
-        
+
         expect(node.getId()).andReturn(1);
         expect(parent.getId()).andReturn("node[1]");
         expect(parent.getEntity()).andReturn(node);
         replay(parent, node);
 
-        final DefaultResourceDao resourceDao = new DefaultResourceDao();
-        resourceDao.setRrdDirectory(tempFolder.getRoot());
+        final FilesystemResourceStorageDao resourceStorageDao = new FilesystemResourceStorageDao();
+        resourceStorageDao.setRrdDirectory(tempFolder.getRoot());
 
-        final NodeSnmpResourceType nodeSnmpResourceType = new NodeSnmpResourceType(resourceDao);
-        
+        final NodeSnmpResourceType nodeSnmpResourceType = new NodeSnmpResourceType(resourceStorageDao);
+
         final OnmsResource resource = nodeSnmpResourceType.getChildByName(parent, new String(""));
         assertEquals("node[1].nodeSnmp[]", resource.getId());
         assertEquals(parent, resource.getParent());
+
+        verify(parent, node);
     }
 }

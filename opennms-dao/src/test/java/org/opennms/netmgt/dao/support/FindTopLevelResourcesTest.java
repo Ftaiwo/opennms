@@ -70,6 +70,7 @@ public class FindTopLevelResourcesTest {
     private CollectdConfigFactory m_collectdConfig;
     private DataCollectionConfigDao m_dataCollectionConfigDao;
     private DefaultResourceDao m_resourceDao;
+    private FilesystemResourceStorageDao m_resourceStorageDao = new FilesystemResourceStorageDao();
 
     private FileAnticipator m_fileAnticipator;
 
@@ -89,6 +90,8 @@ public class FindTopLevelResourcesTest {
 
         expect(m_filterDao.getActiveIPAddressList("IPADDR IPLIKE *.*.*.*")).andReturn(new ArrayList<InetAddress>(0)).anyTimes();
 
+        m_resourceStorageDao.setRrdDirectory(m_fileAnticipator.getTempDir());
+
         m_easyMockUtils.replayAll();
         InputStream stream = ConfigurationTestUtils.getInputStreamForResource(this, "/collectdconfiguration-testdata.xml");
         m_collectdConfig = new CollectdConfigFactory(stream, "localhost", false);
@@ -98,8 +101,8 @@ public class FindTopLevelResourcesTest {
         m_resourceDao.setNodeDao(m_nodeDao);
         m_resourceDao.setLocationMonitorDao(m_locationMonitorDao);
         m_resourceDao.setCollectdConfig(m_collectdConfig);
-        m_resourceDao.setRrdDirectory(m_fileAnticipator.getTempDir());
         m_resourceDao.setDataCollectionConfigDao(m_dataCollectionConfigDao);
+        m_resourceDao.setResourceStorageDao(m_resourceStorageDao);
 
         RrdUtils.setStrategy(new JRobinRrdStrategy());
     }
@@ -107,6 +110,7 @@ public class FindTopLevelResourcesTest {
     @After
     public void tearDown() {
         m_fileAnticipator.tearDown();
+        setStoreByForeignSource(false);
     }
 
     private void setStoreByForeignSource(boolean storeByForeignSource) {
