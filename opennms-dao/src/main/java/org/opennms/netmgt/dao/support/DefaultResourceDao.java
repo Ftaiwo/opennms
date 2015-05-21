@@ -579,7 +579,7 @@ public class DefaultResourceDao implements ResourceDao, InitializingBean {
     protected OnmsResource getForeignSourceNodeEntityResource(String resource) {
         final String[] ident = ResourceTypeUtils.getFsAndFidFromNodeSource(resource);
 
-        if (m_resourceStorageDao.exists(ResourcePath.get(ResourceTypeUtils.SNMP_DIRECTORY, ident[0], ident[1]))) {
+        if (m_resourceStorageDao.exists(ResourcePath.get(ResourceTypeUtils.SNMP_DIRECTORY, ResourceTypeUtils.FOREIGN_SOURCE_DIRECTORY, ident[0], ident[1]))) {
             return m_nodeSourceResourceType.createChildResource(resource);
         } else {
            LOG.debug("resource {} not found by foreign source/foreignId. Trying as a node resource instead...", resource);

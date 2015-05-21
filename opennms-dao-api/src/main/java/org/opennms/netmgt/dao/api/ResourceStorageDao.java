@@ -51,10 +51,22 @@ public interface ResourceStorageDao {
     public boolean exists(ResourcePath path);
 
     /**
+     * Returns true if the path, or any of its children contain
+     * one or more metrics within the given depth.
+     */
+    public boolean exists(ResourcePath path, int depth);
+
+    /**
      * Retrieves the set of child paths one level bellow the given
      * path which contain one or more metrics.
      */
     public Set<ResourcePath> children(ResourcePath path);
+
+    /**
+     * Retrieves the set of child paths one level bellow the given
+     * path which contain one or more metrics within the given depth.
+     */
+    public Set<ResourcePath> children(ResourcePath path, int depth);
 
     /**
      * Deletes all of the resources and metric bellow

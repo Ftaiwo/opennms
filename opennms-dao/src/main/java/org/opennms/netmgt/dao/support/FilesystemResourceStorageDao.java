@@ -5,10 +5,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.opennms.netmgt.dao.api.ResourceStorageDao;
 import org.opennms.netmgt.model.OnmsAttribute;
 import org.opennms.netmgt.model.ResourcePath;
@@ -17,41 +21,47 @@ import org.opennms.netmgt.rrd.RrdUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Sets;
-
 public class FilesystemResourceStorageDao implements ResourceStorageDao {
 
     private static final Logger LOG = LoggerFactory.getLogger(FilesystemResourceStorageDao.class);
+
+    private static final int INFINITE_DEPTH = -1;
+
+    private static final String RRD_EXTENSION = RrdUtils.getExtension();
 
     private File m_rrdDirectory;
 
     @Override
     public boolean exists(ResourcePath path) {
-        return exists(toFile(path).toPath());
+        return exists(path, INFINITE_DEPTH);
+    }
+
+    @Override
+    public boolean exists(ResourcePath path, int depth) {
+        return exists(toFile(path).toPath(), depth);
     }
 
     @Override
     public Set<ResourcePath> children(ResourcePath path) {
-        final Set<ResourcePath> children = Sets.newTreeSet();
+        return children(path, INFINITE_DEPTH);
+    }
 
-        File root = toFile(path);
-        String[] entries = root.list();
-        if (entries == null) {
-            return children;
+    @Override
+    public Set<ResourcePath> children(ResourcePath path, int depth) {
+        final File root = toFile(path);
+        if (depth == 0 || !root.isDirectory()) {
+            return Collections.emptySet();
         }
 
-        for (String entry : entries) {
-            File child = new File(root, entry);
-            if (!child.isDirectory()) {
-                continue;
-            }
-
-            if (exists(child.toPath())) {
-                children.add(new ResourcePath(path, entry));
-            }
+        try (Stream<Path> stream = Files.list(root.toPath())) {
+            return stream.filter(p -> p.toFile().isDirectory()) // filter for directories
+                .filter(p -> exists(p, depth-1)) // filter for folders with metrics
+                .map(p -> ResourcePath.get(path, p.toFile().getName()))
+                .collect(Collectors.toSet());
+        } catch (IOException e) {
+            LOG.error("Failed to list {}. Returning empty set of children.", path, e);
+            return Collections.emptySet();
         }
-
-        return children;
     }
 
     @Override
@@ -64,16 +74,30 @@ public class FilesystemResourceStorageDao implements ResourceStorageDao {
         return RrdUtils.readMetaDataFile(getRrdDirectory().getAbsolutePath(), toRelativePath(path));
     }
 
-    private boolean exists(Path root) {
-        try {
-            if (Files.walk(root).anyMatch(isRrdFile)) {
-                return true;
-            }
-        } catch (IOException e) {
-            LOG.error("Failed to walk {}. Marking path as non-existent.", root, e);
+    private boolean exists(Path root, int depth) {
+        if (!root.toFile().isDirectory()) {
+            return false;
         }
 
-        return false;
+        if (depth < 0) {
+            try (Stream<Path> stream = Files.walk(root)) {
+                return stream.anyMatch(isRrdFile);
+            } catch (IOException e) {
+                LOG.error("Failed to walk {}. Marking path as non-existent.", root, e);
+                return false;
+            }
+        } else {
+            try (Stream<Path> stream = Files.list(root)) {
+                if (depth == 0) {
+                    return stream.anyMatch(isRrdFile);
+                } else {
+                    return stream.anyMatch(p -> exists(p, depth-1));
+                }
+            } catch (IOException e) {
+                LOG.error("Failed to list {}. Marking path as non-existent.", root, e);
+                return false;
+            }
+        }
     }
 
     private File toFile(ResourcePath path) {
@@ -104,40 +128,15 @@ public class FilesystemResourceStorageDao implements ResourceStorageDao {
 
     @Override
     public boolean delete(ResourcePath path) {
-        return deleteDir(toFile(path));
+        return FileUtils.deleteQuietly(toFile(path));
     }
 
     private static Predicate<Path> isRrdFile = new Predicate<Path>() {
         @Override
         public boolean test(Path path) {
             final File file = path.toFile();
-            return file.isFile() && file.getName().endsWith(RrdUtils.getExtension());
+            return file.isFile() && file.getName().endsWith(RRD_EXTENSION);
         }
     };
 
-    /**
-     * Deletes all files and sub-directories under the specified directory
-     * If a deletion fails, the method stops attempting to delete and returns
-     * false.
-     * 
-     * @return true if all deletions were successful, false otherwise.
-     */
-    private static boolean deleteDir(File file) {
-        // If this file is a directory, delete all of its children
-        if (file.isDirectory()) {
-            for (File child : file.listFiles()) {
-                if (!deleteDir(child)) {
-                    return false;
-                }
-            }
-        }
-
-        // Delete the file/directory itself
-        boolean successful = file.delete();
-        if (!successful) {
-            LOG.warn("Failed to delete file: {}", file.getAbsolutePath());
-        }
-
-        return successful;
-    }
 }

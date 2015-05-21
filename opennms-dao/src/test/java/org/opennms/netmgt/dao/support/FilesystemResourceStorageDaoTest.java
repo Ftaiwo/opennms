@@ -77,6 +77,14 @@ public class FilesystemResourceStorageDaoTest {
         Set<ResourcePath> children = m_fsResourceStorageDao.children(ResourcePath.get("a"));
         assertEquals(1, children.size());
         assertEquals(ResourcePath.get("a", "b"), children.iterator().next());
+
+        // Same call but specifying the depth
+        children = m_fsResourceStorageDao.children(ResourcePath.get("a"), 1);
+        assertEquals(1, children.size());
+        assertEquals(ResourcePath.get("a", "b"), children.iterator().next());
+
+        // No children when depth is 0
+        assertEquals(0, m_fsResourceStorageDao.children(ResourcePath.get("a"), 0).size());
         assertTrue(rrd.delete());
     }
 }

@@ -111,7 +111,7 @@ public class InterfaceSnmpResourceType implements OnmsResourceType {
 
     private boolean isResourceTypeOnParentResource(String... pathEls) {
         ResourcePath path = getParentResourcePath(false, pathEls);
-        return m_resourceStorageDao.children(path).size() > 0;
+        return m_resourceStorageDao.children(path, 1).size() > 0;
     }
 
     private ResourcePath getParentResourcePath(boolean verify, String... pathEls) {
@@ -165,7 +165,7 @@ public class InterfaceSnmpResourceType implements OnmsResourceType {
 
         // Verify that the requested resource exists
         final ResourcePath resourcePath = new ResourcePath(parentPath, name);
-        if (!m_resourceStorageDao.exists(resourcePath)) {
+        if (!m_resourceStorageDao.exists(resourcePath, 0)) {
             throw new ObjectRetrievalFailureException(OnmsResource.class, "No resource with name '" + name + "' found.");
         }
 
@@ -181,9 +181,10 @@ public class InterfaceSnmpResourceType implements OnmsResourceType {
     }
 
     private List<OnmsResource> populateResourceList(ResourcePath parent, OnmsNode node, Boolean isForeign) {
-        final Set<String> intfNames = m_resourceStorageDao.children(parent).stream()
+        final Set<String> intfNames = m_resourceStorageDao.children(parent, 1).stream()
                 .map(rp -> rp.getName())
                 .collect(Collectors.toSet());
+
         return populateResourceList(parent, intfNames, node, isForeign);
     }
 
@@ -388,7 +389,7 @@ public class InterfaceSnmpResourceType implements OnmsResourceType {
     }
 
     private OnmsResource getResourceByDomainAndInterface(String domain, String intf) {
-        Set<OnmsAttribute> set = new LazySet<OnmsAttribute>(new AttributeLoader(ResourcePath.get(domain, intf), null, null));
+        Set<OnmsAttribute> set = new LazySet<OnmsAttribute>(new AttributeLoader(ResourcePath.get(ResourceTypeUtils.SNMP_DIRECTORY, domain, intf), null, null));
         return new OnmsResource(intf, intf, this, set);
     }
 
