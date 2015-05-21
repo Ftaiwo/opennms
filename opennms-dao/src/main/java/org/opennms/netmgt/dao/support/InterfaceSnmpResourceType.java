@@ -320,7 +320,7 @@ public class InterfaceSnmpResourceType implements OnmsResourceType {
     }
 
     private OnmsResource getResourceByParentPathAndInterface(ResourcePath path, String intf, String label, Long ifSpeed, String ifSpeedFriendly) throws DataAccessException {
-        Set<OnmsAttribute> set = new LazySet<OnmsAttribute>(new AttributeLoader(path, ifSpeed, ifSpeedFriendly));
+        Set<OnmsAttribute> set = new LazySet<OnmsAttribute>(new AttributeLoader(ResourcePath.get(path, intf), ifSpeed, ifSpeedFriendly));
         return new OnmsResource(intf, label, this, set);
     }
 
